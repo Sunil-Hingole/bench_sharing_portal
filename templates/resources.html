@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ resource_type }} Resources</title>
+</head>
+<body>
+    <h1>{{ resource_type }} Resources</h1>
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Available From</th>
+            <th>Action</th>
+        </tr>
+        {% for resource in resources %}
+        <tr>
+            <td>{{ resource.name }}</td>
+            <td>{{ resource.description }}</td>
+            <td>{{ resource.available_from }}</td>
+            <td><a href="{{ url_for('company.book', resource_id=resource.id) }}">Book for Me</a></td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

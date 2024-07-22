@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resource Types</title>
+</head>
+<body>
+  <h1>Resource Types</h1>
+  <form method="post">
+    <label for="name">Name:</label>
+    <input type="text" name="name" id="name" required>
+    <label for="description">Description:</label>
+    <textarea name="description" id="description" required></textarea>
+    <input type="submit" value="Add Resource Type">
+  </form>
+  <h2>Existing Resource Types</h2>
+  <ul>
+    {% for resource_type in resource_types %}
+      <li>{{ resource_type[1] }} - {{ resource_type[2] }}
+        <a href="{{ url_for('admin.edit_resource_type', id=resource_type[0]) }}">Edit</a>
+        <a href="{{ url_for('admin.delete_resource_type', id=resource_type[0]) }}">Delete</a>
+      </li>
+    {% endfor %}
+  </ul>
+</body>
+</html>

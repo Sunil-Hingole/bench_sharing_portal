@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Logbook</title>
+</head>
+<body>
+    <h1>Logbook</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Description</th>
+                <th>Booked At</th>
+                <th>Released At</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in logbook_entries %}
+            <tr>
+                <td>{{ entry.name }}</td>
+                <td>{{ entry.resource_type }}</td>
+                <td>{{ entry.description }}</td>
+                <td>{{ entry.booked_at }}</td>
+                <td>{{ entry.released_at or "Not Released" }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</body>
+</html>
+

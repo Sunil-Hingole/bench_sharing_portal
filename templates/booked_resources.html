@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Booked Resources</title>
+</head>
+<body>
+    <h1>Booked Resources</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Description</th>
+                <th>Booked At</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for resource in booked_resources %}
+                <tr>
+                    <td>{{ resource.name }}</td>
+                    <td>{{ resource.resource_type }}</td>
+                    <td>{{ resource.description }}</td>
+                    <td>{{ resource.booked_at }}</td>
+                    <td>
+                        <a href="{{ url_for('company.release_resource', resource_id=resource.id) }}">Release Resource</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

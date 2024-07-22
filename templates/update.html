@@ -1,0 +1,36 @@
+<!-- update.html -->
+
+<h1>Update Resource</h1>
+
+<form action="" method="post">
+    {{ form.hidden_tag() }}
+    <label for="name">Name:</label>
+    {{ form.name(size=20) }}
+    <br><br>
+    <label for="resoursetypeid">Resource Type ID:</label>
+    {{ form.resoursetypeid(size=20) }}
+    <br><br>
+    <label for="description">Description:</label>
+    {{ form.description(size=20) }}
+    <br><br>
+    <label for="available_from">Available From:</label>
+    {{ form.available_from(size=20) }}
+    <br><br>
+    <label for="booked_by">Booked By:</label>
+    {{ form.booked_by(size=20) }}
+    <br><br>
+    <label for="booked_at">Booked At:</label>
+    {{ form.booked_at(size=20) }}
+    <br><br>
+    {{ form.submit() }}
+</form>
+
+<p>Current Resource Data:</p>
+<ul>
+    <li>Name: {{ resource_data[0] }}</li>
+    <li>Resource Type ID: {{ resource_data[1] }}</li>
+    <li>Description: {{ resource_data[2] }}</li>
+    <li>Available From: {{ resource_data[3] }}</li>
+    <li>Booked By: {{ resource_data[4] }}</li>
+    <li>Booked At: {{ resource_data[5] }}</li>
+</ul>

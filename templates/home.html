@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bench Sharing Portal</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700&display=swap">
+  <style>
+    body {
+      font-family: 'Open Sans', sans-serif;
+      background-color: #f9f9f9;
+    }
+    .container {
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      font-weight: 600;
+      color: #333;
+    }
+    p {
+      font-size: 18px;
+      color: #666;
+    }
+    .nav-links {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .nav-links li {
+      margin-bottom: 10px;
+    }
+    .nav-links a {
+      text-decoration: none;
+      color: #337ab7;
+    }
+    .nav-links a:hover {
+      color: #23527c;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Welcome to the Bench Sharing Portal</h1>
+    <p>This is a basic portal where you can share and manage bench resources.</p>
+    <h2>Get Started</h2>
+    <ul class="nav-links">
+      <li><a href="{{ url_for('user.register') }}">Register</a></li>
+      <li><a href="{{ url_for('user.login') }}">Login</a></li>
+      <!-- Add more navigation links as needed -->
+    </ul>
+  </div>
+</body>
+</html>

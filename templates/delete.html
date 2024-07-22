@@ -1,0 +1,9 @@
+<!-- delete.html -->
+
+<h1>Delete Resource</h1>
+
+<form action="{{ url_for('user.delete_resource', resource_name=resource_data[0]) }}" method="post">
+    <p>Are you sure you want to delete the resource "{{ resource_data[0] }}"?</p>
+    <button type="submit" class="btn btn-danger">Delete</button>
+    <a href="{{ url_for('user.dashboard') }}" class="btn btn-secondary">Cancel</a>
+</form>

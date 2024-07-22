@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <!-- Add your CSS links or stylesheets here -->
+</head>
+<body>
+    <h1>Welcome, Admin!</h1>
+
+    <!-- Example display of available benches/resources -->
+    <div>
+        <h2>Bench Availability</h2>
+        <div>
+            <div class="bench-category">
+                <h3>Engineers</h3>
+                <p>Available: 10</p>
+            </div>
+            <div class="bench-category">
+                <h3>Seating Space</h3>
+                <p>Available: 23</p>
+            </div>
+            <div class="bench-category">
+                <h3>Product Licenses</h3>
+                <p>Available: 5</p>
+            </div>
+            <!-- Add more categories as needed -->
+        </div>
+    </div>
+
+    <!-- Example navigation or links to manage resources -->
+    <div>
+        <h2>Manage Resources</h2>
+        <ul>
+            <li><a href="{{ url_for('admin.list_resource_types') }}">List Resource Types</a></li>
+            <li><a href="{{ url_for('admin.add_resource_type') }}">Add Resource Type</a></li>
+            <li><a href="{{ url_for('admin.modify_resource_type') }}">Modify Resource Type</a></li>
+            <li><a href="{{ url_for('admin.delete_resource_type') }}">Delete Resource Type</a></li>
+            <!-- Add more links as per your admin dashboard functionality -->
+        </ul>
+    </div>
+
+    <!-- Example log out link -->
+    <div>
+        <a href="{{ url_for('user.logout') }}">Log Out</a>
+    </div>
+
+    <!-- Add any additional HTML, CSS, or JavaScript as needed -->
+
+</body>
+</html>
