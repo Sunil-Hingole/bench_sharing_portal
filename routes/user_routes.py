@@ -5,6 +5,7 @@ from models.resource import Resource
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired
+import scrypt
 
 user_bp = Blueprint('user', __name__)
 company_bp = Blueprint('company', __name__)
@@ -21,26 +22,38 @@ class UpdateResourceForm(FlaskForm):
 class DeleteResourceForm(FlaskForm):
     pass
 
+
+
 @user_bp.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         username = request.form['username']
-        password = generate_password_hash(request.form['password'])
+        password = request.form['password']
         user_type = request.form['user_type']
         user = User(username, password, user_type)
         user.save_to_db(current_app.config['MYSQL'])
         return redirect(url_for('user.login'))
     return render_template('register.html')
 
+
+
+
 @user_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
+        
+        print(f"Attempting login for username: {username}")  # Debug statement
+        
         user_data = User.get_by_username(current_app.config['MYSQL'], username)
+        
         if user_data:
             print("User found:", user_data)
-            if check_password_hash(user_data[2], password):
+            stored_password = user_data[2]
+            print(f"Stored password: {stored_password}")  # Debug statement
+            
+            if stored_password == password:
                 print("Password correct")
                 session['username'] = user_data[1]
                 session['user_type'] = user_data[3]
@@ -50,7 +63,7 @@ def login():
                     return redirect(url_for('user.dashboard'))
                 elif session['user_type'] == 'company':
                     print("Redirecting to company dashboard")
-                    return redirect(url_for('user.company_dashboard'))
+                    return redirect(url_for('company.company_dashboard'))
             else:
                 print("Password incorrect")
         else:
@@ -58,18 +71,77 @@ def login():
     print("Login failed, redirecting to login page")
     return render_template('login.html')
 
-@user_bp.route('/company_dashboard')
-def company_dashboard():
-    engineers_count = get_count_for_category('engineers')
-    seating_space_count = get_count_for_category('seating_space')
-    product_licenses_count = get_count_for_category('product_licenses')
 
-    return render_template(
-        'company_dashboard.html',
-        engineers_count=engineers_count,
-        seating_space_count=seating_space_count,
-        product_licenses_count=product_licenses_count
-    )
+
+
+
+
+
+@company_bp.route('/company_dashboard')
+def company_dashboard():
+    if 'username' not in session:
+        print("User not logged in, redirecting to login")
+        return redirect(url_for('user.login'))
+
+    try:
+        cursor = current_app.config['MYSQL'].connection.cursor()
+
+        # Fetch resource counts by category
+        cursor.execute('''
+            SELECT resource_type_id, COUNT(*) AS count
+            FROM resources
+            GROUP BY resource_type_id
+        ''')
+        resource_counts = cursor.fetchall()
+        cursor.close()
+
+        # Convert the result into a dictionary
+        categories = {row[0]: row[1] for row in resource_counts}
+
+        return render_template('company_dashboard.html', categories=categories)
+
+    except Exception as e:
+        print(f"Error fetching data: {str(e)}")
+        return render_template('company_dashboard.html', categories={})
+
+
+
+@company_bp.route('/bench_resources/<string:category>')
+def bench_resources(category):
+    # Implement your logic to fetch the count for the given category
+    count = get_count_for_category(category)
+    return render_template('bench_resources.html', category=category, count=count)
+
+@company_bp.route('/booked_resources')
+def booked_resources():
+    # Fetch all booked resources
+    cursor = current_app.config['MYSQL'].connection.cursor()
+    cursor.execute('''
+        SELECT * FROM resources
+        WHERE booked_by IS NOT NULL
+    ''')
+    booked_resources = cursor.fetchall()
+    cursor.close()
+
+    return render_template('booked_resources.html', booked_resources=booked_resources)
+
+
+
+
+
+
+# @user_bp.route('/company_dashboard')
+# def company_dashboard():
+#     engineers_count = get_count_for_category('engineers')
+#     seating_space_count = get_count_for_category('seating_space')
+#     product_licenses_count = get_count_for_category('product_licenses')
+
+#     return render_template(
+#         'company_dashboard.html',
+#         engineers_count=engineers_count,
+#         seating_space_count=seating_space_count,
+#         product_licenses_count=product_licenses_count
+#     )
 
 def get_count_for_category(category):
     # Implement your logic to fetch the count from the database

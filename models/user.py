@@ -4,25 +4,25 @@ from werkzeug.security import generate_password_hash, check_password_hash
 class User:
     def __init__(self, username, password, user_type):
         self.username = username
-        self.password_hash = generate_password_hash(password)
+        self.password = password
         self.user_type = user_type
 
-    def save_to_db(self, mysql:MySQL):
-        cursor = mysql.connection.cursor()
-        cursor.execute('''
-            INSERT INTO users (username, password, user_type)
-            VALUES (%s, %s, %s)
-        ''', (self.username, self.password_hash, self.user_type))
-        mysql.connection.commit()
+    def save_to_db(self, db):
+        cursor = db.connection.cursor()  # Adjusted to use db.connection.cursor()
+        query = "INSERT INTO users (username, password, user_type) VALUES (%s, %s, %s)"
+        cursor.execute(query, (self.username, self.password, self.user_type))
+        db.connection.commit()
         cursor.close()
 
+
     @staticmethod
-    def get_by_username(mysql: MySQL, username):
-        cursor = mysql.connection.cursor()
-        cursor.execute('SELECT * FROM users WHERE username = %s', (username,))
-        user_data = cursor.fetchone()
+    def get_by_username(db, username):
+        cursor = db.connection.cursor()  # Adjusted to use db.connection.cursor()
+        query = "SELECT * FROM users WHERE username = %s"
+        cursor.execute(query, (username,))
+        result = cursor.fetchone()
         cursor.close()
-        return user_data
+        return result
 
     @staticmethod
     def get_by_id(mysql: MySQL, user_id):

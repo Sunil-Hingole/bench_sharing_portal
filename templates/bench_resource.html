@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bench Resources - {{ category }}</title>
+</head>
+<body>
+    <h1>Bench Resources - {{ category }}</h1>
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Available From</th>
+            <th>Booked By</th>
+            <th>Booked At</th>
+            <th>Book for Me</th>
+        </tr>
+        {% for resource in resources %}
+            <tr>
+                <td>{{ resource.name }}</td>
+                <td>{{ resource.description }}</td>
+                <td>{{ resource.available_from }}</td>
+                <td>{{ resource.booked_by }}</td>
+                <td>{{ resource.booked_at }}</td>
+                <td><a href="{{ url_for('company.book_resource', resource_name=resource.name) }}">Book for Me</a></td>
+            </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
