@@ -1,28 +1,10 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash, current_app, jsonify
-from werkzeug.security import generate_password_hash, check_password_hash
+# routes/user_routes.py
+from datetime import datetime
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from models import Resource, db
 from models.user import User
-from models.resource import Resource
-from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField
-from wtforms.validators import DataRequired
-import scrypt
 
 user_bp = Blueprint('user', __name__)
-company_bp = Blueprint('company', __name__)
-
-class UpdateResourceForm(FlaskForm):
-    name = StringField('Name', validators=[DataRequired()])
-    resoursetypeid = StringField('Resource Type ID', validators=[DataRequired()])
-    description = StringField('Description', validators=[DataRequired()])
-    available_from = StringField('Available From', validators=[DataRequired()])
-    booked_by = StringField('Booked By', validators=[DataRequired()])
-    booked_at = StringField('Booked At', validators=[DataRequired()])
-    submit = SubmitField('Update Resource')
-
-class DeleteResourceForm(FlaskForm):
-    pass
-
-
 
 @user_bp.route('/register', methods=['GET', 'POST'])
 def register():
@@ -30,138 +12,27 @@ def register():
         username = request.form['username']
         password = request.form['password']
         user_type = request.form['user_type']
-        user = User(username, password, user_type)
-        user.save_to_db(current_app.config['MYSQL'])
+        user = User(username=username, password=password, user_type=user_type)
+        db.session.add(user)
+        db.session.commit()
         return redirect(url_for('user.login'))
     return render_template('register.html')
-
-
-
 
 @user_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        
-        print(f"Attempting login for username: {username}")  # Debug statement
-        
-        user_data = User.get_by_username(current_app.config['MYSQL'], username)
-        
-        if user_data:
-            print("User found:", user_data)
-            stored_password = user_data[2]
-            print(f"Stored password: {stored_password}")  # Debug statement
-            
-            if stored_password == password:
-                print("Password correct")
-                session['username'] = user_data[1]
-                session['user_type'] = user_data[3]
-                print("Session username:", session['username'])
-                print("Session user type:", session['user_type'])
-                if session['user_type'] == 'admin':
-                    return redirect(url_for('user.dashboard'))
-                elif session['user_type'] == 'company':
-                    print("Redirecting to company dashboard")
-                    return redirect(url_for('company.company_dashboard'))
-            else:
-                print("Password incorrect")
-        else:
-            print("User not found")
-    print("Login failed, redirecting to login page")
+        user = User.query.filter_by(username=username).first()
+        if user and user.password == password:
+            session['username'] = user.username
+            session['user_type'] = user.user_type
+            if user.user_type == 'admin':
+                return redirect(url_for('resource.dashboard'))
+            elif user.user_type == 'company':
+                return redirect(url_for('resource.company_dashboard'))
+        flash('Login failed. Check your username and/or password.')
     return render_template('login.html')
-
-
-
-
-
-
-
-@company_bp.route('/company_dashboard')
-def company_dashboard():
-    if 'username' not in session:
-        print("User not logged in, redirecting to login")
-        return redirect(url_for('user.login'))
-
-    try:
-        cursor = current_app.config['MYSQL'].connection.cursor()
-
-        # Fetch resource counts by category
-        cursor.execute('''
-            SELECT resource_type_id, COUNT(*) AS count
-            FROM resources
-            GROUP BY resource_type_id
-        ''')
-        resource_counts = cursor.fetchall()
-        cursor.close()
-
-        # Convert the result into a dictionary
-        categories = {row[0]: row[1] for row in resource_counts}
-
-        return render_template('company_dashboard.html', categories=categories)
-
-    except Exception as e:
-        print(f"Error fetching data: {str(e)}")
-        return render_template('company_dashboard.html', categories={})
-
-
-
-@company_bp.route('/bench_resources/<string:category>')
-def bench_resources(category):
-    # Implement your logic to fetch the count for the given category
-    count = get_count_for_category(category)
-    return render_template('bench_resources.html', category=category, count=count)
-
-@company_bp.route('/booked_resources')
-def booked_resources():
-    # Fetch all booked resources
-    cursor = current_app.config['MYSQL'].connection.cursor()
-    cursor.execute('''
-        SELECT * FROM resources
-        WHERE booked_by IS NOT NULL
-    ''')
-    booked_resources = cursor.fetchall()
-    cursor.close()
-
-    return render_template('booked_resources.html', booked_resources=booked_resources)
-
-
-
-
-
-
-# @user_bp.route('/company_dashboard')
-# def company_dashboard():
-#     engineers_count = get_count_for_category('engineers')
-#     seating_space_count = get_count_for_category('seating_space')
-#     product_licenses_count = get_count_for_category('product_licenses')
-
-#     return render_template(
-#         'company_dashboard.html',
-#         engineers_count=engineers_count,
-#         seating_space_count=seating_space_count,
-#         product_licenses_count=product_licenses_count
-#     )
-
-def get_count_for_category(category):
-    # Implement your logic to fetch the count from the database
-    pass
-
-@company_bp.route('/add', methods=['GET', 'POST'])
-def add():
-    if request.method == 'POST':
-        name = request.form['name']
-        resoursetypeid = request.form['resoursetypeid']
-        description = request.form['description']
-        available_from = request.form['available_from']
-        booked_by = request.form['booked_by']  # Use get() to handle optional fields
-        booked_at = request.form['booked_at']
-        
-        resource = Resource(name, resoursetypeid, description, available_from, booked_by, booked_at)
-        resource.save_to_db(current_app.config['MYSQL'])  # Assuming you have a save_to_db method
-        return redirect(url_for('user.dashboard'))  # Adjust view_resources to the correct route
-    
-    return render_template('add.html')
 
 @user_bp.route('/logout')
 def logout():
@@ -171,80 +42,72 @@ def logout():
 
 @user_bp.route('/dashboard')
 def dashboard():
-    try:
-        cursor = current_app.config['MYSQL'].connection.cursor()
+    # Define the dashboard view
+    return render_template('dashboard.html')
 
-        # Fetch resource records with specific columns
-        cursor.execute('''
-            SELECT r.name, r.resource_type_id, r.description, r.available_from, u.username AS booked_by, r.booked_at
-            FROM resources r
-            LEFT JOIN users u ON r.booked_by = u.id
-        ''')
-        resources = cursor.fetchall()
-        print("Resources by Type:", resources)  # Debug print
 
-        cursor.close()
+@user_bp.route('/booked_resources')
+def booked_resources():
+    username = session.get('username')
+    booked_resources = Resource.query.filter_by(booked_by=username).all()
+    return render_template('booked_resources.html', resources=booked_resources)
 
-        return render_template('dashboard.html', allresources=resources)
 
-    except Exception as e:
-        print(f"Error fetching data: {str(e)}")
-        return render_template('add.html')
 
-@user_bp.route('/update/<string:resource_name>', methods=['GET', 'POST'])
-def update_resource(resource_name):
-    form = UpdateResourceForm()
+@user_bp.route('/update_resource/<int:id>', methods=['GET', 'POST'])
+def update_resource(id):
+    resource = Resource.query.get_or_404(id)
+    
     if request.method == 'POST':
-        # Update resource logic here
-        name = request.form['name']
-        resoursetypeid = request.form['resoursetypeid']
-        description = request.form['description']
-        available_from = request.form['available_from']
-        booked_by = request.form['booked_by']
+        resource.name = request.form['name']
+        resource.description = request.form['description']
+        
+        # Convert the string dates to datetime objects
+        try:
+            resource.available_from = datetime.strptime(request.form['available_from'], '%Y-%m-%dT%H:%M')
+            resource.booked_by = request.form['booked_by']
+            resource.booked_at = datetime.strptime(request.form['booked_at'], '%Y-%m-%dT%H:%M') if request.form['booked_at'] else None
+        except ValueError as e:
+            flash(f"Invalid date format: {e}", 'danger')
+            return redirect(url_for('user.update_resource', id=id))
+        
+        db.session.commit()
+        flash('Resource updated successfully!', 'success')
+        return redirect(url_for('resource.dashboard'))
+    
+    return render_template('update_resource.html', resource=resource)
+
+
+@user_bp.route('/add_booked_resource', methods=['GET', 'POST'])
+def add_booked_resource():
+    if request.method == 'POST':
+        resource_id = request.form['resource_id']
+        booked_by = session.get('username')
         booked_at = request.form['booked_at']
-
-        # Update resource in database
-        cursor = current_app.config['MYSQL'].connection.cursor()
-        cursor.execute('''
-            UPDATE resources
-            SET name = %s, resource_type_id = %s, description = %s, available_from = %s, booked_by = %s, booked_at = %s
-            WHERE name = %s
-        ''', (name, resoursetypeid, description, available_from, booked_by, booked_at, resource_name))
-        cursor.close()
-
-        return redirect(url_for('user.dashboard'))
-
-    # Fetch resource data for update form
-    cursor = current_app.config['MYSQL'].connection.cursor()
-    cursor.execute('SELECT * FROM resources WHERE name = %s', (resource_name,))
-    resource_data = cursor.fetchone()
-    cursor.close()
-
-    if resource_data is None:
-        flash('Resource not found')
-        return redirect(url_for('user.dashboard'))
-
-    return render_template('update.html', form=form, resource_data=resource_data)
+        available_from = request.form['available_from']
+        
+        # Find the resource by ID
+        resource = Resource.query.get(resource_id)
+        if resource:
+            resource.booked_by = booked_by
+            resource.booked_at = datetime.strptime(booked_at, '%Y-%m-%dT%H:%M')
+            resource.available_from = datetime.strptime(available_from, '%Y-%m-%d')
+            db.session.commit()
+            flash('Resource booked successfully!')
+            return redirect(url_for('user.booked_resources'))
+        else:
+            flash('Resource not found.')
+    
+    # For GET request, display the form
+    resources = Resource.query.filter(Resource.booked_by.is_(None)).all()  # Get resources that are not booked
+    return render_template('add_booked_resource.html', resources=resources)
 
 
-@user_bp.route('/delete/<string:resource_name>', methods=['GET', 'POST'])
-def delete_resource(resource_name):
-    if request.method == 'GET':
-        cursor = current_app.config['MYSQL'].connection.cursor()
-        cursor.execute('SELECT * FROM resources WHERE name = %s', (resource_name,))
-        resource_data = cursor.fetchone()
-        cursor.close()
-
-        if resource_data is None:
-            flash('Resource not found')
-            return redirect(url_for('user.dashboard'))
-
-        return render_template('delete.html', resource_data=resource_data)
-
-    elif request.method == 'POST':
-        cursor = current_app.config['MYSQL'].connection.cursor()
-        cursor.execute('DELETE FROM resources WHERE name = %s', (resource_name,))
-        current_app.config['MYSQL'].connection.commit()
-        cursor.close()
-        flash('Resource deleted successfully')
-        return redirect(url_for('user.dashboard'))
+@user_bp.route('/company_dashboard')
+def company_dashboard():
+    if 'username' not in session or session.get('user_type') != 'company':
+        return redirect(url_for('user.login'))
+    
+    # Fetch all resources
+    resources = Resource.query.all()
+    return render_template('user.company_dashboard.html', resources=resources)

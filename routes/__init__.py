@@ -1,22 +1,20 @@
-from flask import Flask, render_template
-from flask_mysqldb import MySQL
-from routes.resource_routes import resource_bp
+# from flask import Flask
+# from models import db
+# from routes.user_routes import user_bp
+# from routes.resource_routes import resource_bp  # Adjust the import path based on your file structure
 
-app = Flask(__name__)
+# def create_app():
+#     app = Flask(__name__)
 
-# MySQL configurations
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'portal_user'
-app.config['MYSQL_PASSWORD'] = 'BenchSharing@123'
-app.config['MYSQL_DB'] = 'bench_sharing_portal'
+#     # App configuration
+#     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
+#     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-mysql = MySQL(app)
+#     # Initialize the SQLAlchemy instance with the app
+#     db.init_app(app)
 
-app.register_blueprint(resource_bp)
+#     # Register Blueprints
+#     app.register_blueprint(user_bp)
+#     app.register_blueprint(resource_bp)
 
-@app.route('/')
-def home():
-    return render_template('index.html')
-
-if __name__ == '__main__':
-    app.run(debug=True)
+#     return app

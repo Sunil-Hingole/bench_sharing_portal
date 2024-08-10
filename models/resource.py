@@ -1,104 +1,47 @@
-from flask_mysqldb import MySQL
+from models import db
 from datetime import datetime
+datetime.utcnow()
 
-class Resource:
-    def __init__(self, name, resource_type_id, description, available_from, booked_by, booked_at):
-        self.name = name
-        self.resource_type_id = resource_type_id
-        self.description = description
-        self.available_from = available_from
-        self.booked_by = booked_by
-        self.booked_at = booked_at
-        
-    def save_to_db(self, mysql: MySQL):
-        cursor = mysql.connection.cursor()
-        cursor.execute('''
-            INSERT INTO resources (name, resource_type_id, description, available_from, booked_by, booked_at)
-            VALUES (%s, %s, %s, %s, %s, %s)
-        ''', (self.name, self.resource_type_id, self.description, self.available_from, self.booked_by, self.booked_at))
-        mysql.connection.commit()
-        cursor.close()
+class ResourceType(db.Model):
+    __tablename__ = 'resource_type'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), unique=True, nullable=False)
 
-    @staticmethod
-    def get_all_by_company(mysql: MySQL, company_id):
-        cursor = mysql.connection.cursor()
-        cursor.execute('''
-            SELECT * FROM resources
-            WHERE booked_by = %s
-        ''', (company_id,))
-        resources = cursor.fetchall()
-        cursor.close()
-        return resources
-    
-    @staticmethod
-    def book(mysql: MySQL, resource_id, user_id):
-        booked_at = datetime.now().date()
-        cursor = mysql.connection.cursor()
-        cursor.execute('''
-            UPDATE resources
-            SET booked_by = %s, booked_at = %s
-            WHERE id = %s
-        ''', (user_id, booked_at, resource_id))
-        mysql.connection.commit()
-        cursor.close()
+    def __repr__(self):
+        return f"ResourceType('{self.name}')"
 
-    @staticmethod
-    def release(mysql: MySQL, resource_id):
-        cursor = mysql.connection.cursor()
-        cursor.execute('''
-            UPDATE resources
-            SET booked_by = NULL, booked_at = NULL
-            WHERE id = %s
-        ''', (resource_id,))
-        mysql.connection.commit()
-        cursor.close()
+class Resource(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), nullable=False)
+    description = db.Column(db.String(255))
+    category = db.Column(db.String(50), nullable=True)
+    available = db.Column(db.Boolean, default=True)  
+    available_from = db.Column(db.DateTime, default=datetime.utcnow) 
+    resource_type_id = db.Column(db.Integer, db.ForeignKey('resource_type.id'))
+    resource_type = db.relationship('ResourceType', backref=db.backref('resources', lazy=True))
+    booked_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    booked_at = db.Column(db.DateTime, nullable=True)
 
-    @staticmethod
-    def get_all(mysql: MySQL):
-        cursor = mysql.connection.cursor()
-        cursor.execute('''
-            SELECT * FROM resources
-        ''')
-        mysql.connection.commit()
-        cursor.close()
 
-    # @staticmethod
-    # def get_by_type(mysql, resource_type_id):
-    #     cursor = mysql.connection.cursor()
-    #     cursor.execute('SELECT * FROM resources WHERE resource_type_id = %s', [resource_type_id])
-    #     resources = cursor.fetchall()
-    #     cursor.close()
-    #     return resources
+    def __init__(self, **kwargs):
+        if isinstance(kwargs.get('available_from'), str):
+            kwargs['available_from'] = datetime.strptime(kwargs['available_from'], '%Y-%m-%d')
+        if isinstance(kwargs.get('booked_at'), str):
+            kwargs['booked_at'] = datetime.strptime(kwargs['booked_at'], '%Y-%m-%dT%H:%M')
+        super().__init__(**kwargs)
 
-    # @staticmethod
-    # def book_resource(mysql, resource_id, user_id):
-    #     cursor = mysql.connection.cursor()
-    #     cursor.execute('''
-    #         UPDATE resources
-    #         SET booked_by = %s, booked_at = CURDATE()
-    #         WHERE id = %s
-    #     ''', (user_id, resource_id))
-    #     mysql.connection.commit()
-    #     cursor.execute('''
-    #         INSERT INTO bookings (resource_id, user_id, booked_at)
-    #         VALUES (%s, %s, CURDATE())
-    #     ''', (resource_id, user_id))
-    #     mysql.connection.commit()
-    #     cursor.close()
+    def __repr__(self):
+        return f"Resource('{self.name}')"
 
-    # @staticmethod
-    # def release_resource(mysql, resource_id):
-    #     cursor = mysql.connection.cursor()
-    #     cursor.execute('''
-    #         UPDATE resources
-    #         SET booked_by = NULL, booked_at = NULL
-    #         WHERE id = %s
-    #     ''', [resource_id])
-    #     mysql.connection.commit()
-    #     cursor.execute('''
-    #         UPDATE bookings
-    #         SET released_at = CURDATE()
-    #         WHERE resource_id = %s AND released_at IS NULL
-    #     ''', [resource_id])
-    #     mysql.connection.commit()
-    #     cursor.close()
+class Booking(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user = db.relationship('User', backref=db.backref('bookings', lazy=True))
+    resource_id = db.Column(db.Integer, db.ForeignKey('resource.id'))
+    resource = db.relationship('Resource', backref=db.backref('bookings', lazy=True))
+    booked_at = db.Column(db.DateTime, nullable=False)
+    released_at = db.Column(db.DateTime, nullable=True)
+
+    def __repr__(self):
+        return f"Booking('{self.id}')"
+ # type: ignore
