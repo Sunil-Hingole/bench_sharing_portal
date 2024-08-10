@@ -42,16 +42,34 @@ def dashboard():
     resources = Resource.query.all()
     return render_template('dashboard.html', resources=resources)
 
+from datetime import datetime
+
 @resource_bp.route('/update/<int:id>', methods=['GET', 'POST'])
 def update_resource(id):
     resource = Resource.query.get_or_404(id)
+    
     if request.method == 'POST':
-        resource.name = request.form['name']
-        resource.resource_type_id = request.form['resoursetypeid']
-        resource.description = request.form['description']
-        resource.available_from = request.form['available_from']
-        resource.booked_by = request.form.get('booked_by')
-        resource.booked_at = request.form.get('booked_at')
+        resource.name = request.form.get('name', resource.name)
+        
+        # Convert string dates to datetime objects
+        available_from_str = request.form.get('available_from')
+        booked_at_str = request.form.get('booked_at')
+        
+        if available_from_str:
+            try:
+                resource.available_from = datetime.fromisoformat(available_from_str)
+            except ValueError:
+                flash('Invalid date format for available_from.')
+                return redirect(url_for('resource.update_resource', id=id))
+
+        if booked_at_str:
+            try:
+                resource.booked_at = datetime.fromisoformat(booked_at_str)
+            except ValueError:
+                flash('Invalid date format for booked_at.')
+                return redirect(url_for('resource.update_resource', id=id))
+        
+        resource.booked_by = request.form.get('booked_by', resource.booked_by)
 
         db.session.commit()
         flash('Resource updated successfully!')
