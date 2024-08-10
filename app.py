@@ -1,48 +1,41 @@
-from flask import Flask, render_template, redirect, url_for, session, flash
-from flask_mysqldb import MySQL
+from flask import Flask, render_template
+from models import Resource, db
+from flask_migrate import Migrate
 
-app = Flask(__name__,template_folder='templates')
-app.secret_key = 'Pass@123'  # Replace with your secret key
+def create_app():
+    app = Flask(__name__)
 
-# MySQL configurations
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'portal_user'
-app.config['MYSQL_PASSWORD'] = 'BenchSharing@123'
-app.config['MYSQL_DB'] = 'bench_sharing_portal'
+    # App configuration
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-mysql = MySQL(app)
-app.config['MYSQL']=mysql
+    # Secret key for session management
+    app.config['SECRET_KEY'] = 'pass@123'  # Replace with a strong, unique key
 
-from routes.user_routes import user_bp
-#from routes.admin_routes import admin_bp
+    # Initialize SQLAlchemy
+    db.init_app(app)
 
-from routes.user_routes import company_bp
+    # Initialize Flask-Migrate
+    migrate = Migrate(app, db)
 
-app.register_blueprint(user_bp)
-app.register_blueprint(company_bp, url_prefix='/company')
-#app.register_blueprint(admin_bp)
+    # Register Blueprints
+    from routes.user_routes import user_bp
+    from routes.resource_routes import resource_bp
 
-@app.route('/')
-def home():
-    return render_template('home.html')
+    app.register_blueprint(user_bp, url_prefix='/user')
+    app.register_blueprint(resource_bp, url_prefix='/resource')
 
+    @app.route('/')
+    def home():
+        return render_template('home.html')
+    
+    @app.route('/dashboard')
+    def dashboard():
+        resources = Resource.query.all()  # Fetch all resources from the database
+        return render_template('dashboard.html', resources=resources)
 
-@app.route('/admin/dashboard')
-def admin_dashboard():
-    if 'username' in session and session['user_type'] == 'admin':
-        return render_template('admin_dashboard.html', username=session['username'])
-    else:
-        flash('You are not authorized to access this page.')
-        return redirect(url_for('user.login'))
+    return app
 
 if __name__ == '__main__':
+    app = create_app()
     app.run(debug=True)
-
-# @app.route('/logout')
-# def logout():
-#     session.pop('username', None)
-#     session.pop('user_type', None)
-#     return redirect(url_for('user.login'))
-
-# if __name__ == '__main__':
-#     app.run(debug=True)

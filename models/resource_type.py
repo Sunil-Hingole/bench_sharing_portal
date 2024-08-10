@@ -1,48 +1,35 @@
-from flask_mysqldb import MySQL
+from flask_sqlalchemy import SQLAlchemy
+from models import db
 
-class ResourceType:
-    def __init__(self, name, description):
-        self.name = name
-        self.description = description
 
-    def save_to_db(self, mysql:MySQL):
-        cursor = mysql.connection.cursor()
-        cursor.execute("INSERT INTO resource_types (name, description) VALUES (%s, %s)", 
-                    (self.name, self.description))
-        mysql.connection.commit()
-        cursor.close() 
+class ResourceType(db.Model):
+    __tablename__ = 'resource_types'
 
-    @staticmethod
-    def get_all(mysql:MySQL):
-        cursor = mysql.connection.cursor()
-        cursor.execute("SELECT * FROM resource_types")
-        resource_types = cursor.fetchall()
-        cursor.close()
-        return resource_types
-    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(150), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+
+    def save_to_db(self):
+        db.session.add(self)
+        db.session.commit()
 
     @staticmethod
-    def get_by_id(mysql: MySQL, id):
-        cursor = mysql.connection.cursor()
-        cursor.execute('SELECT * FROM resource_types WHERE id = %s', (id,))
-        resource_type = cursor.fetchone()
-        cursor.close()
-        return resource_type
+    def get_all():
+        return ResourceType.query.all()
 
     @staticmethod
-    def update(mysql: MySQL, id, name, description):
-        cursor = mysql.connection.cursor()
-        cursor.execute('''
-            UPDATE resource_types
-            SET name = %s, description = %s
-            WHERE id = %s
-        ''', (name, description, id))
-        mysql.connection.commit()
-        cursor.close()
+    def get_by_id(id):
+        return ResourceType.query.get(id)
 
     @staticmethod
-    def delete(mysql: MySQL, id):
-        cursor = mysql.connection.cursor()
-        cursor.execute('DELETE FROM resource_types WHERE id = %s', (id,))
-        mysql.connection.commit()
-        cursor.close()
+    def update(id, name, description):
+        resource_type = ResourceType.query.get(id)
+        resource_type.name = name
+        resource_type.description = description
+        db.session.commit()
+
+    @staticmethod
+    def delete(id):
+        resource_type = ResourceType.query.get(id)
+        db.session.delete(resource_type)
+        db.session.commit()

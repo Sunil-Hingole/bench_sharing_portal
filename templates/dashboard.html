@@ -4,144 +4,155 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@6.0.0-beta3/css/all.min.css">
     <style>
-        body {
-            font-family: 'Open Sans', sans-serif;
-            background-color: #f9f9f9;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 40px auto;
+        .content-wrapper {
+            background-color: #f4f6f9;
             padding: 20px;
-            background-color: #fff;
-            border: 1px solid #ddd;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
-        h1 {
-            font-weight: 600;
-            color: #333;
-            margin-top: 0;
+        .btn-custom {
+            background-color: #007bff;
+            border-color: #007bff;
         }
-        h2 {
-            font-weight: 500;
-            color: #666;
-            margin-top: 20px;
-        }
-        .form-container {
-            margin-top: 20px;
-        }
-        .btn-primary {
-            background-color: #337ab7;
-            border-color: #337ab7;
-            color: #fff;
-        }
-        .btn-primary:hover {
-            background-color: #23527c;
-            border-color: #23527c;
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        th {
-            background-color: #f0f0f0;
-        }
-        .dropdown-toggle::after {
-            display: none;
+        .btn-custom:hover {
+            background-color: #0056b3;
+            border-color: #004085;
         }
         .dropdown-menu {
-            padding: 0;
-            border: none;
-            border-radius: 5px;
+            border-radius: 0.25rem;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
         .dropdown-item {
-            padding: 10px;
             font-size: 16px;
-            color: #333;
-            text-decoration: none;
         }
-        .dropdown-item:hover {
-            background-color: #f0f0f0;
-        }
-        .logout-btn {
-            display: inline-block;
-            margin-top: 20px;
-            font-size: 16px;
-            color: #fff;
+        .btn-logout {
             background-color: #dc3545;
-            text-decoration: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            transition: background-color 0.3s ease;
+            border-color: #dc3545;
         }
-        .logout-btn:hover {
+        .btn-logout:hover {
             background-color: #c82333;
+            border-color: #bd2130;
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <h1>Welcome, {{ session['username'] }}</h1>
+<body class="hold-transition sidebar-mini">
+    <div class="wrapper">
+        <!-- Navbar -->
+        <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
+                </li>
+            </ul>
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link btn-logout" href="{{ url_for('user.logout') }}">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </li>
+            </ul>
+        </nav>
 
-        <div class="form-container">
-            <a href="/add" class="btn btn-primary">
-                Add Resource
+        <!-- Sidebar -->
+        <aside class="main-sidebar sidebar-dark-primary elevation-4">
+            <a href="#" class="brand-link">
+                <span class="brand-text font-weight-light">Dashboard</span>
             </a>
-            <a href="{{ url_for('user.logout') }}" class="logout-btn">
-                Logout
-            </a>
+            <div class="sidebar">
+                <nav class="mt-2">
+                    <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+                        <!-- Add sidebar menu items here if needed -->
+                    </ul>
+                </nav>
+            </div>
+        </aside>
+
+        <!-- Content Wrapper -->
+        <div class="content-wrapper">
+            <div class="container-fluid">
+                <h1 class="my-4">Welcome, {{ session['username'] }}</h1>
+                <h3 class="my-4">You are logged in as an Admin User</h3>
+
+                <div class="mb-4">
+                    <a href="{{ url_for('resource.add_resource') }}" class="btn btn-custom"><i class="fas fa-plus"></i> Add Resource</a>
+                </div>
+
+                <h2 class="my-4">Resource Records</h2>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Resource Type ID</th>
+                                <th>Description</th>
+                                <th>Available From</th>
+                                <th>Booked By</th>
+                                <th>Booked At</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in resources %}
+                            <tr>
+                                <td>{{ record.name }}</td>
+                                <td>{{ record.resource_type_id }}</td>
+                                <td>{{ record.description }}</td>
+                                <td>{{ record.available_from }}</td>
+                                <td>{{ record.booked_by }}</td>
+                                <td>{{ record.booked_at }}</td>
+                                <td>
+                                    <div class="dropdown">
+                                        <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton{{ loop.index }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </button>
+                                        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton{{ loop.index }}">
+                                            <li><a class="dropdown-item" href="{{ url_for('resource.update_resource', id=record.id) }}">Update</a></li>
+                                            <li>
+                                                <form action="{{ url_for('resource.delete_resource', id=record.id) }}" method="post" style="display: inline;">
+                                                    <button type="submit" class="dropdown-item" onclick="confirmDelete(event)">Delete</button>
+                                                </form>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
 
-        <h2>Resource Records</h2>
-        <table id="recordsTable">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Resource Type ID</th>
-                    <th>Description</th>
-                    <th>Available From</th>
-                    <th>Booked By</th>
-                    <th>Booked At</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for record in allresources %}
-                <tr>
-                    <td>{{ record[0] }}</td>
-                    <td>{{ record[1] }}</td>
-                    <td>{{ record[2] }}</td>
-                    <td>{{ record[3] }}</td>
-                    <td>{{ record[4] }}</td>
-                    <td>{{ record[5] }}</td>
-                    <td style="align-items: center;">
-                        <div class="dropdown">
-                            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton{{ loop.index }}" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i class="bi bi-three-dots-vertical"></i>
-                            </button>
-                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton{{ loop.index }}">
-                                <a class="dropdown-item" href="/update/{{ record[0] }}">Update</a>
-                                <form action="/delete/{{ record[0] }}" method="post" style="display: inline;">
-                                    <button type="submit" class="dropdown-item">Delete</button>
-                                </form>
-                            </div>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <!-- Control Sidebar -->
+        <aside class="control-sidebar control-sidebar-dark">
+        </aside>
+
     </div>
 
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.7/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+    <script>
+        function confirmDelete(event) {
+            event.preventDefault(); // Prevent the form from submitting
+            const form = event.target.closest('form'); // Get the form element
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit(); // Submit the form if confirmed
+                }
+            });
+        }
+    </script>
 </body>
 </html>
